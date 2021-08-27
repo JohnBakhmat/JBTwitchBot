@@ -48,12 +48,10 @@ client.on("message", (channel, tags, message, self) => {
       if (role === "k") role = "killer";
 
       axios
-        .get("https://dbd-api.herokuapp.com/perks")
+        .get("https://dbd-api.herokuapp.com/perks?lang=en")
         .then((resp) => {
           const db = resp.data
-            .filter(
-              (item) => item.lang === "en" && item.role.toLowerCase() === role
-            )
+            .filter(item.role.toLowerCase() === role)
             .map((item) => item.perk_name);
           const build = _.sampleSize(db, 4);
           console.log(build);
