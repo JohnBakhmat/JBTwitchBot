@@ -1,6 +1,8 @@
 const tmi = require("tmi.js");
-const axios = require("axios");
 const _ = require("lodash");
+
+const perks = require("./data/perks.json");
+const sessions = require("./data/sessions.json");
 const client = new tmi.Client({
   options: { debug: true },
   connection: {
@@ -15,29 +17,103 @@ const client = new tmi.Client({
 });
 client.connect();
 
-// let prefixes = [{channel:"johnbakhmat",prefix:"?"}];
 const prefix = ">";
 
 client.on("message", (channel, tags, message, self) => {
   // Ignore echoed messages.
   if (self) return;
-
+  
+  //Hello
   if (message.toLowerCase() === `${prefix}hello`) {
     client.say(channel, `@${tags.username}, Yo what's up`);
   }
-  // // TODO SetPrefix
-  // if (message.toLowerCase().startsWith(`${prefix}setPrefix`)) {
-  //   const args = message.match(/ .*/);
-  //   if (!!args) {
 
-  //     const newPrefix = args[0].trimStart();
-  //     if(newPrefix.length!==1) return
+  //TODO: remove multipe people from the queue
 
-  //     if (prefixes.map((c) => c.channel).includes(channel)) {
-  //       console.log(prefixes.find((obj) => obj.channel == channel).prefix);
-  //     }
-  //   }
-  // }
+  //Open queue
+  if (message.toLowerCase() === `${prefix}open`) {
+    let queue = sessions.find(
+      (c) => c.channel === channel.toLowerCase().trimStart()
+    ).queue
+    queue.isOpened = true
+    queue.members = []
+    client.say(channel, `@${tags.username}, queue is opened!`);
+  }
+
+
+  //Close queue
+  if (message.toLowerCase() === `${prefix}close`) {
+    let queue = sessions.find(
+      (c) => c.channel === channel.toLowerCase().trimStart()
+    ).queue
+    queue.isOpened = false
+    queue.members = []
+    client.say(channel, `@${tags.username}, queue is closed!`);
+  }
+
+
+  //show queue
+  if (message.toLowerCase() === `${prefix}who`) {
+    let queue = sessions.find(
+      (c) => c.channel === channel.toLowerCase().trimStart()
+    ).queue;
+      if(!queue.isOpened){
+        client.say(channel, `Queue is currently closed!`)
+      }
+
+    client.say(channel, `Queue: ${queue.members.join(", ")}`);
+  }
+
+  
+
+  //Join queue
+  if (message.toLowerCase() === `${prefix}join`) {
+    let queue = sessions.find(
+      (c) => c.channel === channel.toLowerCase().trimStart()
+    ).queue.members;
+    let member = `@${tags.username}`;
+    if (!queue.includes(member)) {
+      queue.push(member);
+      client.say(
+        channel,
+        `@${tags.username}, you are enqueued! Your position is: ${
+          queue.indexOf(member) + 1
+        }`
+      );
+    } else {
+      client.say(
+        channel,
+        `@${tags.username}, you are already in queue! Your position is: ${
+          queue.indexOf(member) + 1
+        }`
+      );
+    }
+  }
+
+
+  //Leave queue
+  if (message.toLowerCase() === `${prefix}leave`) {
+    let queue = sessions.find(
+      (c) => c.channel === channel.toLowerCase().trimStart()
+    ).queue.members;
+    let member = `@${tags.username}`;
+    if (queue.includes(member)) {
+      let newQueue = [];
+      queue.forEach((element) => {
+        if (element !== member) {
+          newQueue.push(element);
+        }
+      });
+
+      queue.members = newQueue;
+
+      client.say(
+        channel,
+        `@${tags.username}, you are dequeued!`
+      );
+    }
+  }
+
 
   //Roulette
   if (message.toLowerCase().startsWith(`${prefix}roulette`)) {
@@ -47,22 +123,15 @@ client.on("message", (channel, tags, message, self) => {
       if (role === "s") role = "survivor";
       if (role === "k") role = "killer";
 
-      axios
-        .get("https://dbd-api.herokuapp.com/perks?lang=en")
-        .then((resp) => {
-          const db = resp.data
-            .filter(item.role.toLowerCase() === role)
-            .map((item) => item.perk_name);
-          const build = _.sampleSize(db, 4);
-          console.log(build);
-          client.say(
-            channel,
-            `@${tags.username}, your perks are: ${build.join(", ")}`
-          );
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      const db = perks
+        .filter((item) => item.role.toLowerCase() === role)
+        .map((item) => item.perk_name);
+      const build = _.sampleSize(db, 4);
+      console.log(build);
+      client.say(
+        channel,
+        `@${tags.username}, your perks are: ${build.join(", ")}`
+      );
     } else {
       client.say(
         channel,

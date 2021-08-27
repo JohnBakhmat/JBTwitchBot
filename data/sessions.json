@@ -1,0 +1,10 @@
+[
+  {
+    "channel": "#johnbakhmat",
+    "prefix": ">",
+    "queue": {
+      "isOpened": false,
+      "members": []
+    }
+  }
+]
