@@ -1,0 +1,12 @@
+{
+  "name": "queue-bot-service",
+  "packageManager": "yarn@3.0.1",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "lodash": "^4.17.21",
+    "tmi.js": "^1.8.5"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
